@@ -1,7 +1,4 @@
 import clcrypto
-from psycopg2 import connect
-from psycopg2.extras import DictCursor
-
 
 
 class User:
@@ -33,7 +30,6 @@ class User:
 
     def save_to_db(self, cursor):
         if self.__id == -1:
-            # saving new instance using prepared statments
             sql = """INSERT INTO users(username, email, password_hash) 
                     VALUES (%s, %s, %s) RETURNING id"""
             values = (self.username, self.email, self.password_hash)
@@ -75,6 +71,6 @@ class User:
 
     def delete(self, cursor):
         sql = "DELETE FROM users WHERE id=%s"
-        cursor.execute(sql, (self.__id, ))
+        cursor.execute(sql, (self.__id,))
         self.__id = -1
         return True
