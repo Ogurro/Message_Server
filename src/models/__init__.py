@@ -1,9 +1,9 @@
 import os
 import psycopg2
 
-DB_NAME = 'messages_server_db'
+DB_NAME = 'msg_server_db'
 DB_URI = os.environ.get('SERVER_DB_URI')  # postgresql://postgres@localhost
-DB_COMPLETE_URI = '/'.join((DB_URI, DB_NAME))
+COMPLETE_DB_URI = '/'.join((DB_URI, DB_NAME))
 
 
 def nuke_db(db_name=DB_NAME, db_uri=DB_URI):
@@ -11,7 +11,11 @@ def nuke_db(db_name=DB_NAME, db_uri=DB_URI):
         cnx.autocommit = True
         sql = f"DROP DATABASE {db_name}"
         with cnx.cursor() as curs:
-            curs.execute(sql)
+            try:
+                curs.execute(sql)
+                print('DB nuked!')
+            except psycopg2.ProgrammingError:
+                print('DB do not exist')
 
 
 def create_db(db_name=DB_NAME, db_uri=DB_URI):
@@ -20,9 +24,10 @@ def create_db(db_name=DB_NAME, db_uri=DB_URI):
         sql = f"CREATE DATABASE {db_name}"
         with cnx.cursor() as curs:
             curs.execute(sql)
+            print('DB created!')
 
 
-def create_table_users(db_uri=DB_COMPLETE_URI):
+def create_table_users(db_uri=COMPLETE_DB_URI):
     sql = """CREATE TABLE Users(
         id SERIAL,
         username VARCHAR(255) NOT NULL UNIQUE,
@@ -33,9 +38,10 @@ def create_table_users(db_uri=DB_COMPLETE_URI):
     with psycopg2.connect(db_uri) as cnx:
         with cnx.cursor() as curs:
             curs.execute(sql)
+            print('Table users created!')
 
 
-def create_table_messages(db_uri=DB_COMPLETE_URI):
+def create_table_messages(complete_db_uri=COMPLETE_DB_URI):
     sql = """CREATE TABLE Messages(
         id SERIAL,
         from_id INTEGER NOT NULL,
@@ -46,9 +52,10 @@ def create_table_messages(db_uri=DB_COMPLETE_URI):
         FOREIGN KEY (from_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (to_id) REFERENCES users(id) ON DELETE CASCADE
         )"""
-    with psycopg2.connect(db_uri) as cnx:
+    with psycopg2.connect(complete_db_uri) as cnx:
         with cnx.cursor() as curs:
             curs.execute(sql)
+            print('Table messages created!')
 
 
 if __name__ == '__main__':
