@@ -1,8 +1,7 @@
 import bcrypt
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
-COMPLETE_DB_URI = 'postgresql://postgres@localhost/msg_server_db'
+from . import COMPLETE_DB_URI
 
 
 class User:
@@ -71,6 +70,21 @@ class User:
             with cnx.cursor(cursor_factory=RealDictCursor) as curs:
                 sql = """SELECT id, username, email, hashed_password FROM users WHERE id=%s"""
                 curs.execute(sql, (user_id,))
+                data = curs.fetchone()
+                if data:
+                    loaded_user = User()
+                    loaded_user.__id = data.get('id')
+                    loaded_user.username = data.get('username')
+                    loaded_user.email = data.get('email')
+                    loaded_user.__hashed_password = data.get('hashed_password')
+                    return loaded_user
+
+    @staticmethod
+    def load_user_by_name(username):
+        with psycopg2.connect(COMPLETE_DB_URI) as cnx:
+            with cnx.cursor(cursor_factory=RealDictCursor) as curs:
+                sql = """SELECT id, username, email, hashed_password FROM users WHERE username=%s"""
+                curs.execute(sql, (username,))
                 data = curs.fetchone()
                 if data:
                     loaded_user = User()

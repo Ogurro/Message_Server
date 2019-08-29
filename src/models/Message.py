@@ -1,8 +1,7 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
-
-COMPLETE_DB_URI = 'postgresql://postgres@localhost/msg_server_db'
+from . import COMPLETE_DB_URI
 
 
 class Message:
