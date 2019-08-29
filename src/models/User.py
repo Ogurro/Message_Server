@@ -1,10 +1,8 @@
 import bcrypt
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from . import COMPLETE_DB_URI
-# if __name__ == '__main__':
-#     import os
-#     COMPLETE_DB_URI = os.environ.get('COMPLETE_DB_URI')
+
+COMPLETE_DB_URI = 'postgresql://postgres@localhost/msg_server_db'
 
 
 class User:
@@ -20,7 +18,7 @@ class User:
         self.__hashed_password = ''
 
     def __str__(self):
-        return f"User() # id='{self.id}', username='{self.username}', emil='{self.email}'"
+        return f"User | id: {self.id} | username: {self.username} | emil: {self.email}"
 
     @property
     def id(self):
@@ -59,7 +57,7 @@ class User:
                             VALUES (%s, %s, %s) RETURNING id"""
                     values = (self.username, self.email, self.hashed_password)
                     curs.execute(sql, values)
-                    self.__id = curs.fetchone()['id']
+                    self.__id = curs.fetchone().get('id')
                     return True
                 else:
                     sql = """UPDATE users SET username = %s, email = %s, hashed_password = %s WHERE id=%s"""
@@ -67,47 +65,39 @@ class User:
                     curs.execute(sql, values)
                     return True
 
-    #TODO FIX LATER
-    #     @staticmethod
-    #     def load_user_by_id(cursor, user_id):
-    #         sql = """SELECT id, username, email, hashed_password FROM users WHERE id=%s"""
-    #         cursor.execute(sql, (user_id,))
-    #         data = cursor.fetchone()
-    #         if data:
-    #             loaded_user = User()
-    #             loaded_user.__id = data['id']
-    #             loaded_user.username = data['username']
-    #             loaded_user.email = data['email']
-    #             loaded_user.__hashed_password = data['password_hash']
-    #             return loaded_user
-    #
-    #     @staticmethod
-    #     def load_all_users(cursor):
-    #         sql = "SELECT id, username, email, hashed_password FROM users"
-    #         ret = []
-    #         cursor.execute(sql)
-    #         for row in cursor.fetchall():
-    #             loaded_user = User()
-    #             loaded_user.__id = row['id']
-    #             loaded_user.username = row['username']
-    #             loaded_user.email = row['email']
-    #             loaded_user.__hashed_password = row['password_hash']
-    #             ret.append(loaded_user)
-    #         return ret
-    #
-    #     def delete(self, cursor):
-    #         sql = "DELETE FROM users WHERE id=%s"
-    #         cursor.execute(sql, (self.__id,))
-    #         self.__id = -1
-    #         return True
-    #
-    # if __name__ == '__main__':
-    #     u = User()
-    #     u.hashed_password = 'foobarbaz'
-    #     print(User.check_password('foobarbaz', u.hashed_password))  # TRUE
-    #     print(User.check_password('foobazbar', u.hashed_password))  # FALSE
-    #     u.set_new_passwd('foobarbaz', 'foobazbar', 'foobazbar1')  # NEW PASS NOT MACH
-    #     u.set_new_passwd('foobarbaz1', 'foobazbar', 'bazfoobar')  # WRONG PASSWD
-    #     u.set_new_passwd('foobarbaz', 'foobazbar', 'foobazbar')  # PASSWD changed perform check
-    #     print(User.check_password('foobarbaz', u.hashed_password))  # FALSE, old passwd
-    print(User.check_password('foobazbar', u.hashed_password))  # TRUE
+    @staticmethod
+    def load_user_by_id(user_id):
+        with psycopg2.connect(COMPLETE_DB_URI) as cnx:
+            with cnx.cursor(cursor_factory=RealDictCursor) as curs:
+                sql = """SELECT id, username, email, hashed_password FROM users WHERE id=%s"""
+                curs.execute(sql, (user_id,))
+                data = curs.fetchone()
+                if data:
+                    loaded_user = User()
+                    loaded_user.__id = data.get('id')
+                    loaded_user.username = data.get('username')
+                    loaded_user.email = data.get('email')
+                    loaded_user.__hashed_password = data.get('hashed_password')
+                    return loaded_user
+
+    @staticmethod
+    def load_all_users():
+        ret = []
+        sql = "SELECT id, username, email, hashed_password FROM users"
+        with psycopg2.connect(COMPLETE_DB_URI) as cnx:
+            with cnx.cursor(cursor_factory=RealDictCursor) as curs:
+                curs.execute(sql)
+                for row in curs.fetchall():
+                    loaded_user = User()
+                    loaded_user.__id = row.get('id')
+                    loaded_user.username = row.get('username')
+                    loaded_user.email = row.get('email')
+                    loaded_user.__hashed_password = row.get('hashed_password')
+                    ret.append(loaded_user)
+        return ret
+
+    def delete(self, cursor):
+        sql = "DELETE FROM users WHERE id=%s"
+        cursor.execute(sql, (self.__id,))
+        self.__id = -1
+        return True

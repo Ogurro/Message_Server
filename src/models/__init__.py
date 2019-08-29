@@ -1,9 +1,8 @@
-import os
 import psycopg2
 
 DB_NAME = 'msg_server_db'
-DB_URI = os.environ.get('SERVER_DB_URI')  # postgresql://postgres@localhost
-COMPLETE_DB_URI = '/'.join((DB_URI, DB_NAME))
+DB_URI = 'postgresql://postgres@localhost'
+COMPLETE_DB_URI = 'postgresql://postgres@localhost/msg_server_db'
 
 
 def nuke_db(db_name=DB_NAME, db_uri=DB_URI):
