@@ -1,4 +1,11 @@
-class Message():
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from datetime import datetime
+
+COMPLETE_DB_URI = 'postgresql://postgres@localhost/msg_server_db'
+
+
+class Message:
     __id = None
     __from_id = None
     __to_id = None
@@ -12,55 +19,92 @@ class Message():
         self.text = ''
         self.creation_date = ''
 
+    def __str__(self):
+        if self.creation_date:
+            date = datetime.strftime(self.creation_date, '%d.%m.%Y %H:%M:%S')
+        else:
+            date = ''
+        return f"""Message | id: {self.id} | from: {self.__from_id} | to: {self.__to_id} | created date: {date}
+        text={self.text}
+        """
+
     @property
     def id(self):
         return self.__id
 
-    def save_to_db(self, cursor):
-        if self.__id == -1:
-            sql = """INSERT INTO messages(from_id, to_id, text) 
-                    VALUES (%s, %s, %s) RETURNING id"""
-            values = (self.__from_id, self.__to_id, self.text)
-            cursor.execute(sql, values)
-            self.__id = cursor.fetchone()['id']
-            return True
-        else:
-            sql = """UPDATE messages SET text = %s WHERE id=%s"""
-            values = (self.text, self.id)
-            cursor.execute(sql, values)
-            return True
+    def save_to_db(self):
+        with psycopg2.connect(COMPLETE_DB_URI) as cnx:
+            with cnx.cursor(cursor_factory=RealDictCursor) as curs:
+                if self.__id == -1:
+                    sql = """INSERT INTO messages(from_id, to_id, msg_text) 
+                        VALUES (%s, %s, %s) RETURNING id, creation_date"""
+                    values = (self.from_id, self.to_id, self.text)
+                    curs.execute(sql, values)
+                    return_values = curs.fetchone()
+                    self.__id = return_values.get('id')
+                    self.creation_date = datetime.strftime(return_values.get('creation_date'), '%d.%m.%Y %H:%M:%S')
+                    return True
+                else:
+                    sql = """UPDATE messages SET msg_text = %s WHERE id=%s"""
+                    values = (self.text, self.id)
+                    curs.execute(sql, values)
+                    return True
 
     @staticmethod
-    def load_message_by_id(cursor, message_id):
-        sql = """SELECT id, from_id, to_id, text, creation_date FROM messages WHERE id=%s"""
-        cursor.execute(sql, (message_id,))
-        data = cursor.fetchone()
-        if data:
-            loaded_message = Message()
-            loaded_message.__id = data['id']
-            loaded_message.__from_id = data['from_id']
-            loaded_message.__to_id = data['to_id']
-            loaded_message.text = data['text']
-            loaded_message.creation_date = data['creation_date']
-            return loaded_message
+    def load_message_by_id(message_id):
+        with psycopg2.connect(COMPLETE_DB_URI) as cnx:
+            with cnx.cursor(cursor_factory=RealDictCursor) as curs:
+                sql = """SELECT id, from_id, to_id, msg_text, creation_date FROM messages WHERE id=%s"""
+                curs.execute(sql, (message_id,))
+                data = curs.fetchone()
+                if data:
+                    loaded_message = Message()
+                    loaded_message.__id = data.get('id')
+                    loaded_message.__from_id = data.get('from_id')
+                    loaded_message.__to_id = data.get('to_id')
+                    loaded_message.text = data.get('msg_text')
+                    loaded_message.creation_date = data.get('creation_date')
+                    return loaded_message
 
     @staticmethod
-    def load_all_messages(cursor, user_id=None):
-        sql = """SELECT id, from_id, to_id, text, creation_date FROM messages"""
-        if user_id:
-            sql += " WHERE to_id=%s"
-        cursor.execute(sql, (user_id,))
-        ret = []
-        for row in cursor.fetchall():
-            loaded_message = Message()
-            loaded_message.__id = row['id']
-            loaded_message.__from_id = row['from_id']
-            loaded_message.__to_id = row['to_id']
-            loaded_message.text = row['text']
-            loaded_message.creation_date = row['creation_date']
-            ret.append(loaded_message)
-        return ret
+    def load_all_messages(to_user_id=None, from_user_id=None):
+        with psycopg2.connect(COMPLETE_DB_URI) as cnx:
+            with cnx.cursor(cursor_factory=RealDictCursor) as curs:
+                sql = """SELECT id, from_id, to_id, msg_text, creation_date FROM messages"""
+                ret = []
+                if to_user_id:
+                    sql += " WHERE to_id=%s"
+                    curs.execute(sql, (to_user_id,))
+                if from_user_id:
+                    sql += " WHERE from_id=%s"
+                    curs.execute(sql, (from_user_id,))
+                for row in curs.fetchall():
+                    loaded_message = Message()
+                    loaded_message.__id = row.get('id')
+                    loaded_message.__from_id = row.get('from_id')
+                    loaded_message.__to_id = row.get('to_id')
+                    loaded_message.text = row.get('msg_text')
+                    loaded_message.creation_date = row.get('creation_date')
+                    ret.append(loaded_message)
+                return ret
 
     @staticmethod
-    def load_all_messages_for_user(cursor, user_id):
-        return Message.load_all_messages(cursor, user_id)
+    def load_all_messages_for_user(user_id):
+        return Message.load_all_messages(to_user_id=user_id)
+
+    @staticmethod
+    def load_all_messages_form_user(user_id):
+        return Message.load_all_messages(from_user_id=user_id)
+
+    def delete(self):
+        with psycopg2.connect(COMPLETE_DB_URI) as cnx:
+            with cnx.cursor(cursor_factory=RealDictCursor) as curs:
+                sql = "DELETE FROM messages WHERE id=%s"
+                curs.execute(sql, (self.__id,))
+                self.__id = -1
+                return True
+
+
+if __name__ == '__main__':
+    m = Message.load_message_by_id(19)
+    print(m)

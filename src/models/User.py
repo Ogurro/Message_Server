@@ -96,8 +96,10 @@ class User:
                     ret.append(loaded_user)
         return ret
 
-    def delete(self, cursor):
-        sql = "DELETE FROM users WHERE id=%s"
-        cursor.execute(sql, (self.__id,))
-        self.__id = -1
-        return True
+    def delete(self):
+        with psycopg2.connect(COMPLETE_DB_URI) as cnx:
+            with cnx.cursor(cursor_factory=RealDictCursor) as curs:
+                sql = "DELETE FROM users WHERE id=%s"
+                curs.execute(sql, (self.__id,))
+                self.__id = -1
+                return True
