@@ -1,7 +1,7 @@
 # Messages_Server
 >CLI apps to manage users and send messages between them
 
-#Requirements
+# Requirements
 * Set up *DB_NAME* and *DB_URI*
 ```
 # Example
