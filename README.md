@@ -2,7 +2,7 @@
 >CLI apps to manage users and send messages between them
 
 # Requirements
-* Set up *DB_NAME* and *DB_URI*
+* Set up *DB_NAME* and *DB_URI* in models package
 ```
 # Example
 DB_NAME = 'msg_server_db'
