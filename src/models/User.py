@@ -8,16 +8,14 @@ class User:
     __id = None
     username = None
     __hashed_password = None
-    email = None
 
     def __init__(self):
         self.__id = -1
         self.username = ''
-        self.email = ''
         self.__hashed_password = ''
 
     def __str__(self):
-        return f"User | id: {self.id} | username: {self.username} | emil: {self.email}"
+        return f"User | id: {self.id} | username: {self.username}"
 
     @property
     def id(self):
@@ -52,15 +50,15 @@ class User:
         with psycopg2.connect(COMPLETE_DB_URI) as cnx:
             with cnx.cursor(cursor_factory=RealDictCursor) as curs:
                 if self.__id == -1:
-                    sql = """INSERT INTO users(username, email, hashed_password)
-                            VALUES (%s, %s, %s) RETURNING id"""
-                    values = (self.username, self.email, self.hashed_password)
+                    sql = """INSERT INTO users(username, hashed_password)
+                            VALUES (%s, %s) RETURNING id"""
+                    values = (self.username, self.hashed_password)
                     curs.execute(sql, values)
                     self.__id = curs.fetchone().get('id')
                     return True
                 else:
-                    sql = """UPDATE users SET username = %s, email = %s, hashed_password = %s WHERE id=%s"""
-                    values = (self.username, self.email, self.hashed_password, self.id)
+                    sql = """UPDATE users SET username = %s, hashed_password = %s WHERE id=%s"""
+                    values = (self.username, self.hashed_password, self.id)
                     curs.execute(sql, values)
                     return True
 
@@ -68,14 +66,13 @@ class User:
     def load_user_by_id(user_id):
         with psycopg2.connect(COMPLETE_DB_URI) as cnx:
             with cnx.cursor(cursor_factory=RealDictCursor) as curs:
-                sql = """SELECT id, username, email, hashed_password FROM users WHERE id=%s"""
+                sql = """SELECT id, username, hashed_password FROM users WHERE id=%s"""
                 curs.execute(sql, (user_id,))
                 data = curs.fetchone()
                 if data:
                     loaded_user = User()
                     loaded_user.__id = data.get('id')
                     loaded_user.username = data.get('username')
-                    loaded_user.email = data.get('email')
                     loaded_user.__hashed_password = data.get('hashed_password')
                     return loaded_user
 
@@ -83,21 +80,20 @@ class User:
     def load_user_by_name(username):
         with psycopg2.connect(COMPLETE_DB_URI) as cnx:
             with cnx.cursor(cursor_factory=RealDictCursor) as curs:
-                sql = """SELECT id, username, email, hashed_password FROM users WHERE username=%s"""
+                sql = """SELECT id, username, hashed_password FROM users WHERE username=%s"""
                 curs.execute(sql, (username,))
                 data = curs.fetchone()
                 if data:
                     loaded_user = User()
                     loaded_user.__id = data.get('id')
                     loaded_user.username = data.get('username')
-                    loaded_user.email = data.get('email')
                     loaded_user.__hashed_password = data.get('hashed_password')
                     return loaded_user
 
     @staticmethod
     def load_all_users():
         ret = []
-        sql = "SELECT id, username, email, hashed_password FROM users"
+        sql = "SELECT id, username, hashed_password FROM users"
         with psycopg2.connect(COMPLETE_DB_URI) as cnx:
             with cnx.cursor(cursor_factory=RealDictCursor) as curs:
                 curs.execute(sql)
@@ -105,7 +101,6 @@ class User:
                     loaded_user = User()
                     loaded_user.__id = row.get('id')
                     loaded_user.username = row.get('username')
-                    loaded_user.email = row.get('email')
                     loaded_user.__hashed_password = row.get('hashed_password')
                     ret.append(loaded_user)
         return ret

@@ -4,10 +4,10 @@ from models.User import User
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='manage users')
+    exclusive_group = parser.add_mutually_exclusive_group()
     parser.add_argument('--username', '-u', help='user login')
     parser.add_argument('--password', '-p', help='user password')
-    exclusive_group = parser.add_mutually_exclusive_group()
     exclusive_group.add_argument('--list', '-l', action='store_true', help='lists all users')
     exclusive_group.add_argument('--new-pass', '-n', help='set new password')
     exclusive_group.add_argument('--edit', '-e', help='edit user login')

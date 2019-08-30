@@ -13,8 +13,8 @@ class Message:
 
     def __init__(self):
         self.__id = -1
-        self.__from_id = ''
-        self.__to_id = ''
+        self.from_id = ''
+        self.to_id = ''
         self.text = ''
         self.creation_date = ''
 
@@ -23,7 +23,7 @@ class Message:
             date = datetime.strftime(self.creation_date, '%d.%m.%Y %H:%M:%S')
         else:
             date = ''
-        return f"""Message | id: {self.id} | from: {self.__from_id} | to: {self.__to_id} | created date: {date}
+        return f"""Message | id: {self.id} | from: {self.from_id} | to: {self.to_id} | created date: {date}
         text={self.text}
         """
 
@@ -59,8 +59,8 @@ class Message:
                 if data:
                     loaded_message = Message()
                     loaded_message.__id = data.get('id')
-                    loaded_message.__from_id = data.get('from_id')
-                    loaded_message.__to_id = data.get('to_id')
+                    loaded_message.from_id = data.get('from_id')
+                    loaded_message.to_id = data.get('to_id')
                     loaded_message.text = data.get('msg_text')
                     loaded_message.creation_date = data.get('creation_date')
                     return loaded_message
@@ -80,15 +80,15 @@ class Message:
                 for row in curs.fetchall():
                     loaded_message = Message()
                     loaded_message.__id = row.get('id')
-                    loaded_message.__from_id = row.get('from_id')
-                    loaded_message.__to_id = row.get('to_id')
+                    loaded_message.from_id = row.get('from_id')
+                    loaded_message.to_id = row.get('to_id')
                     loaded_message.text = row.get('msg_text')
                     loaded_message.creation_date = row.get('creation_date')
                     ret.append(loaded_message)
                 return ret
 
     @staticmethod
-    def load_all_messages_for_user(user_id):
+    def load_all_messages_to_user(user_id):
         return Message.load_all_messages(to_user_id=user_id)
 
     @staticmethod
@@ -102,8 +102,3 @@ class Message:
                 curs.execute(sql, (self.__id,))
                 self.__id = -1
                 return True
-
-
-if __name__ == '__main__':
-    m = Message.load_message_by_id(19)
-    print(m)

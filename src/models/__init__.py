@@ -30,7 +30,6 @@ def create_table_users(db_uri=COMPLETE_DB_URI):
     sql = """CREATE TABLE Users(
         id SERIAL,
         username VARCHAR(255) NOT NULL UNIQUE,
-        email VARCHAR(255) UNIQUE, 
         hashed_password VARCHAR(80) NOT NULL,
         PRIMARY KEY (id)
         )"""
