@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2.extras import RealDictCursor
 
 DB_NAME = 'msg_server_db'
 DB_URI = 'postgresql://postgres@localhost'
@@ -8,7 +9,7 @@ COMPLETE_DB_URI = 'postgresql://postgres@localhost/msg_server_db'
 def nuke_db(db_name=DB_NAME, db_uri=DB_URI):
     with psycopg2.connect(db_uri) as cnx:
         cnx.autocommit = True
-        sql = f"DROP DATABASE {db_name}"
+        sql = "DROP DATABASE " + db_name
         with cnx.cursor() as curs:
             try:
                 curs.execute(sql)
@@ -34,7 +35,7 @@ def create_table_users(db_uri=COMPLETE_DB_URI):
         PRIMARY KEY (id)
         )"""
     with psycopg2.connect(db_uri) as cnx:
-        with cnx.cursor() as curs:
+        with cnx.cursor(cursor_factory=RealDictCursor) as curs:
             curs.execute(sql)
             print('Table users created!')
 
@@ -51,7 +52,7 @@ def create_table_messages(complete_db_uri=COMPLETE_DB_URI):
         FOREIGN KEY (to_id) REFERENCES users(id) ON DELETE CASCADE
         )"""
     with psycopg2.connect(complete_db_uri) as cnx:
-        with cnx.cursor() as curs:
+        with cnx.cursor(cursor_factory=RealDictCursor) as curs:
             curs.execute(sql)
             print('Table messages created!')
 
