@@ -3,7 +3,7 @@ from psycopg2.extras import RealDictCursor
 
 DB_NAME = 'msg_server_db'
 DB_URI = 'postgresql://postgres@localhost'
-COMPLETE_DB_URI = 'postgresql://postgres@localhost/msg_server_db'
+COMPLETE_DB_URI = '/'.join([DB_URI, DB_NAME])
 
 
 def nuke_db(db_name=DB_NAME, db_uri=DB_URI):
